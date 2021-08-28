@@ -370,10 +370,37 @@ public class LintCode {
 
     /*
     #919 Meeting room II
-    
+    1. sort intervals by starting time
+    2. keep track of ending
      */
+    public int minMeetingRooms(List<Interval> intervals) {
+        //no meeting case
+        if (intervals == null || intervals.size() == 0) {
+            return 0;
+        }
+        Collections.sort(intervals, (a, b) -> a.start - b.start);
+        PriorityQueue<Interval> minHeap = new PriorityQueue<>((a,b) -> a.end - b.end);
+        minHeap.add(intervals.get(0));
+        for (int i = 1; i < intervals.size(); i++) {
+            Interval curr = intervals.get(i);
+            Interval earliest = minHeap.remove();
+            if (curr.start >= earliest.end) {
+                earliest.end = curr.end;
+            }else {
+                minHeap.add(curr);
+            }
+            minHeap.add(earliest);
+        }
+        return minHeap.size();
+    }
 
-
+    public class Interval {
+        int start, end;
+        Interval(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
 
 
 
