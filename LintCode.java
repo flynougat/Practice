@@ -402,6 +402,65 @@ public class LintCode {
         }
     }
 
+    /*
+    #599 insert into a cyclic sorted list
+     */
+    public ListNode insert(ListNode node, int x) {
+        // head is null
+        if (node == null) {
+            ListNode head = new ListNode(x);
+            head.next = head;
+            return head;
+        }
+
+        ListNode max = node;
+        while (max.next != node && max.val <= max.next.val) {
+            max = max.next;
+        }
+        ListNode min = max.next;
+        ListNode curr = min;
+        if (x >= max.val || x <= min.val){
+            ListNode head = new ListNode(x);
+            max.next = head;
+            head.next = min;
+        }else {
+            while (curr.next.val < x){
+                curr = curr.next;
+            }
+            ListNode head = new ListNode(x);
+            head.next = curr.next;
+            curr.next = head;
+        }
+        return node;
+    }
+
+
+    /*
+    #425 Letter combinations of phone
+     */
+    public List<String> letterCombinations(String digits) {
+        //null exception
+        LinkedList<String> result = new LinkedList<>();
+        if (digits.length() == 0) return result;
+
+        result.add("");
+
+        String[]char_map = new String[]{"0", "1", "abc", "def", "ghi", "jkl", "mno", "pqrs",
+        "tuv", "wxyz"};
+
+        //store in queue
+        for (int i = 0; i < digits.length(); i++){
+            int index = Character.getNumericValue(digits.charAt(i));
+            while (result.peek().length()==i) {
+                String permutation = result.remove();
+                for (char c : char_map[index].toCharArray()) {
+                    result.add(permutation + c);
+                }
+            }
+        }
+        return result;
+    }
+
 
 
 }
