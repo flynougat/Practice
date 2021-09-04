@@ -242,12 +242,12 @@ public class LintCode {
         String aString = String.valueOf(a);
         int i = 0;
         if (a >= 0) {
-            while (i < aString.length() && aString.charAt(i) > '5') {
+            while (i<aString.length() && aString.charAt(i) < '5'){
                 i++;
             }
         }else {
             i = 1;
-            while (i < aString.length() && aString.charAt(i) <= '5') {
+            while (i<aString.length() && aString.charAt(i) > '5'){
                 i++;
             }
         }
@@ -370,8 +370,950 @@ public class LintCode {
 
     /*
     #919 Meeting room II
-    
+    1. sort intervals by starting time
+    2. keep track of ending
      */
+    public int minMeetingRooms(List<Interval> intervals) {
+        //no meeting case
+        if (intervals == null || intervals.size() == 0) {
+            return 0;
+        }
+        Collections.sort(intervals, (a, b) -> a.start - b.start);
+        PriorityQueue<Interval> minHeap = new PriorityQueue<>((a,b) -> a.end - b.end);
+        minHeap.add(intervals.get(0));
+        for (int i = 1; i < intervals.size(); i++) {
+            Interval curr = intervals.get(i);
+            Interval earliest = minHeap.remove();
+            if (curr.start >= earliest.end) {
+                earliest.end = curr.end;
+            }else {
+                minHeap.add(curr);
+            }
+            minHeap.add(earliest);
+        }
+        return minHeap.size();
+    }
+
+    public class Interval {
+        int start, end;
+        Interval(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
+
+    /*
+    #599 insert into a cyclic sorted list
+     */
+    public ListNode insert(ListNode node, int x) {
+        // head is null
+        if (node == null) {
+            ListNode head = new ListNode(x);
+            head.next = head;
+            return head;
+        }
+
+        ListNode max = node;
+        while (max.next != node && max.val <= max.next.val) {
+            max = max.next;
+        }
+        ListNode min = max.next;
+        ListNode curr = min;
+        if (x >= max.val || x <= min.val){
+            ListNode head = new ListNode(x);
+            max.next = head;
+            head.next = min;
+        }else {
+            while (curr.next.val < x){
+                curr = curr.next;
+            }
+            ListNode head = new ListNode(x);
+            head.next = curr.next;
+            curr.next = head;
+        }
+        return node;
+    }
+
+
+    /*
+    #425 Letter combinations of phone
+     */
+    public List<String> letterCombinations(String digits) {
+        //null exception
+        LinkedList<String> result = new LinkedList<>();
+        if (digits.length() == 0) return result;
+
+        result.add("");
+
+        String[]char_map = new String[]{"0", "1", "abc", "def", "ghi", "jkl", "mno", "pqrs",
+        "tuv", "wxyz"};
+
+        //store in queue
+        for (int i = 0; i < digits.length(); i++){
+            int index = Character.getNumericValue(digits.charAt(i));
+            while (result.peek().length()==i) {
+                String permutation = result.remove();
+                for (char c : char_map[index].toCharArray()) {
+                    result.add(permutation + c);
+                }
+            }
+        }
+        return result;
+    }
+
+
+    /*
+    #374 Spiral matrix
+     */
+    public List<Integer> spiralOrder(int[][] matrix) {
+        List<Integer> result = new ArrayList<>();
+
+        //special case
+        if (matrix.length == 0) return result;
+
+        int rawBegin = 0;
+        int rawEnd = matrix.length - 1;
+        int columnBegin = 0;
+        int columnEnd = matrix[0].length - 1;
+
+        while(rawBegin <= rawEnd && columnBegin <= columnEnd) {
+            // traverse raw by column index left to right
+            for (int i = columnBegin; i <= columnEnd; i++){
+                result.add(matrix[rawBegin][i]);
+            }
+            rawBegin++;
+
+            //traverse column by raw position up to bottom
+            for (int i = rawBegin; i <= rawEnd; i++) {
+                result.add(matrix[i][columnEnd]);
+            }
+            columnEnd--;
+
+            //check bottom raw, traverse from right to left
+            if (rawBegin <= rawEnd){
+                for (int i=columnEnd; i >= columnBegin; i--){
+                    result.add(matrix[rawEnd][i]);
+                }
+            }
+            rawEnd--;
+
+            //traverse column bottom to up
+            if (columnBegin <= columnEnd){
+                for (int i = rawEnd; i >= rawBegin; i--){
+                    result.add(matrix[i][columnBegin]);
+                }
+            }
+            columnBegin++;
+        }
+        return result;
+    }
+
+
+    /*
+    #363 trap rain water
+     */
+    public int trapRainWater(int[] heights) {
+        // min(L, R) - height[i], sum all positive
+        //two pointer time O(n), space O(1)
+        if (heights.length == 0) return 0;
+        int left = 0;
+        int right = heights.length - 1;
+        int leftMax = heights[left];
+        int rightMax = heights[right];
+        int result = 0;
+
+        while (left < right){
+            if (leftMax < rightMax) {
+                left++;
+                leftMax = Math.max(leftMax, heights[left]);
+                result += leftMax - heights[left];
+            }else {
+                right--;
+                rightMax = Math.max(rightMax, heights[right]);
+                result += rightMax - heights[right];
+            }
+        }
+        return result;
+    }
+
+
+    /*
+    HARD - revisit
+    #1422 Shortest Path Visiting All Nodes
+    use DP + BFS. time O(n*2^n), space O(n*2^n)
+     */
+    public int shortestPathLength(int[][] graph) {
+        final int V = graph.length;
+        int[][] dp = new int[V][1<<V];
+        for (int[] row : dp){
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+        Queue<int[]> q = new ArrayDeque<>();
+        //start
+        for (int v = 0; v!=V; v++){
+            dp[v][1<<v] = 0;
+            q.offer(new int[] {v, 1<<v});
+        }
+        for (int step = 1; !q.isEmpty(); step++){
+            for (int b = q.size(); b != 0; b--){
+                int[] now = q.poll();
+                final int at = now[0], start = now[1];
+
+                //to next position
+                for (int next : graph[at]){
+                    final int nextStart = start | (1<<next);
+                    if (dp[next][nextStart] != Integer.MAX_VALUE)
+                        continue;
+                    dp[next][nextStart] = step;
+                    q.offer(new int[]{next, nextStart});
+                }
+            }
+        }
+
+        int res = Integer.MAX_VALUE;
+        for (int v=0; v!=V; v++) {
+            res = Math.min(res, dp[v][(1<<V) - 1]);
+        }
+
+        return res;
+    }
+
+
+    /*
+    HARD - Revisit
+    https://www.youtube.com/watch?v=gD4dzeQ6YH0
+    #1278 Max Sum of Rectangle No Larger Than K
+     */
+    public int maxSumSubmatrix(int[][] matrix, int k) {
+        int m = matrix.length, n = matrix[0].length;
+
+        int max = Integer.MIN_VALUE;
+
+        for (int i=0; i<m; i++){
+            int[] add = new int[n];
+            for (int j = i; j<m; j++){
+                sum(add, matrix[j]);
+
+                TreeSet<Integer> treeset = new TreeSet<>();
+                max = Math.max(max, helper(add, treeset, k));
+                if (max == k){
+                    return max;
+                }
+            }
+        }
+        return max == Integer.MIN_VALUE ? -1 : max;
+    }
+    private int helper(int[] add, TreeSet<Integer> treeset, int k){
+        treeset.add(0);
+        int prefixSum = 0;
+        int curMax = Integer.MIN_VALUE;
+        for (int ele : add) {
+            prefixSum += ele;
+            Integer ceil = treeset.ceiling(prefixSum - k);
+            if (ceil != null){
+                if (prefixSum - ceil == k){
+                    return k;
+                }else {
+                    curMax = Math.max(curMax, prefixSum - ceil);
+                }
+            }
+            treeset.add(prefixSum);
+        }
+        return curMax;
+    }
+    private void sum(int[] add, int[] cols){
+        for (int i=0; i<cols.length; i++){
+            add[i] += cols[i];
+        }
+    }
+
+
+    /*
+    #1523 Partitioning Array
+    each subarray length k
+    - Each element in the array occurs in exactly one subsquence -> A.length % k == 0
+    - All the numbers in a subsequence are distinct -> max duplicate number <= number of sub array
+    - Elements in the array having the same value must be in different subsequences
+    return ture if it's possible to partition the array satisfies the above conditions
+     */
+    public boolean PartitioningArray(int[] A, int k) {
+        if (A.length == 0) return true;
+        if (A.length % k != 0) return false;
+
+        int numSub = A.length / k;
+        int count = 0;
+        //key is number, value is how many times occurred
+        Map<Integer,Integer> map = new HashMap<>();
+        for (int i = 0; i < A.length; i++){
+            map.putIfAbsent(A[i], 0);
+            map.put(A[i], map.get(A[i]) + 1);
+            count = Math.max(count, map.get(A[i]));
+        }
+        return count <= numSub;
+    }
+
+
+    /*
+    # 408 add binary
+    Given two binary strings, return their sum (In binary notation).
+     */
+    public String addBinary(String a, String b) {
+        // write your code here
+        int numberA = Integer.parseInt(a, 2);
+        int numberB = Integer.parseInt(b, 2);
+
+        int sum = numberA + numberB;
+
+        return Integer.toBinaryString(sum);
+    }
+
+
+
+
+    /*
+    #423 Valid Parentheses
+    length should be even number
+    pair
+     */
+    public boolean isValidParentheses(String s) {
+        if (s.length() % 2 != 0) return false;
+        Stack<Character> stack = new Stack<>();
+        for (char c : s.toCharArray()) {
+            if (c == '(' || c == '{' || c == '['){
+                stack.push(c);
+            }
+            if (c == ')'){
+                if(stack.isEmpty()){
+                    return false;
+                }
+                if(stack.peek() != '('){
+                    return false;
+                }else {
+                    stack.pop();
+                }
+            }
+            if (c == '}'){
+                if(stack.isEmpty()){
+                    return false;
+                }
+                if(stack.peek() != '{'){
+                    return false;
+                }else {
+                    stack.pop();
+                }
+            }
+            if (c == ']'){
+                if(stack.isEmpty()){
+                    return false;
+                }
+                if(stack.peek() != '['){
+                    return false;
+                }else {
+                    stack.pop();
+                }
+            }
+        }
+        return stack.isEmpty();
+    }
+
+
+
+    /*
+    193 · Longest Valid Parentheses
+     */
+
+    public int longestValidParentheses(String s) {
+        Stack<Character> stack = new Stack<>();
+        for (char c : s.toCharArray()) {
+            
+        }
+    }
+
+
+
+
+    /*
+    #1106 · Maximum Binary Tree
+    The root is the maximum number in the array.
+    The left subtree is the maximum tree constructed from left part subarray divided by the maximum number.
+    The right subtree is the maximum tree constructed from right part subarray divided by the maximum number.
+     */
+    public TreeNode constructMaximumBinaryTree(int[] nums) {
+        // null case
+        if (nums.length == 0) return null;
+
+        //find max
+        int index = 0;
+        int max = nums[0];
+        for (int i = 1; i<nums.length; i++) {
+            if (nums[i] > max) {
+                max = nums[i];
+                index = i;
+            }
+        }
+
+        //build tree
+        TreeNode root = new TreeNode(max);
+        root.left = constructMaximumBinaryTree(Arrays.copyOfRange(nums, 0, index));
+        if (index == nums.length - 1) {
+            root.right = null;
+        }
+        root.right = constructMaximumBinaryTree(Arrays.copyOfRange(nums, index + 1, nums.length));
+
+        return root;
+    }
+
+
+
+    /*
+    *******************************************************************
+    #433 Number of Islands
+    use matrix row and column as unique Key for 1, in i-j pair format
+     */
+    public int numIslands(boolean[][] grid) {
+        if (grid == null || grid.length ==0) return 0;
+
+        int result = 0;
+
+        for (int i = 0; i<grid.length; i++){
+            for (int j = 0; j < grid[0].length; j++){
+                if (grid[i][j] == true) {
+                    result += islandDFS(grid, i, j);
+                }
+            }
+        }
+        return result;
+    }
+
+    private int islandDFS(boolean[][] grid, int i, int j){
+        if (i < 0 || i >= grid.length || j < 0 || j >= grid[i].length || grid[i][j] == false){
+            return 0;
+        }
+        grid[i][j] = false;
+        islandDFS(grid, i+1, j);
+        islandDFS(grid, i-1, j);
+        islandDFS(grid, i, j+1);
+        islandDFS(grid, i, j-1);
+        return 1;
+    }
+
+
+    /*
+    ***********************************************
+    #655 Add Strings
+     */
+    public String addStrings(String num1, String num2) {
+//        int a = Integer.parseInt(num1);
+//        int b = Integer.parseInt(num2);
+//        int sum = a + b;
+//        return String.valueOf(sum);
+
+        StringBuilder result = new StringBuilder();
+        int i = num1.length() - 1;
+        int j = num2.length() -1;
+        int carry = 0;
+        while (i>=0 || j>=0){
+            int sum = carry;
+            if (i>=0){
+                sum += num1.charAt(i--) - '0';
+            }
+            if (j>=0){
+                sum += num2.charAt(j--) - '0';
+            }
+            result.append(sum % 10);
+            carry = sum / 10;
+        }
+        if (carry != 0) result.append(carry);
+
+        return result.reverse().toString();
+    }
+
+
+    /*
+    **************************************************************************************
+    # 1350 · Excel Sheet Column Title
+    Given a positive integer, return its corresponding column title as appear in an Excel sheet.
+     */
+    public String convertToTitle(int n) {
+        StringBuilder str = new StringBuilder();
+        while (n > 0){
+            n--;
+            str.append((char) ((n % 26) + 'A'));
+            n /= 26;
+        }
+        return str.reverse().toString();
+    }
+
+
+    /*
+    # 30 Insert Interval
+    Original sorted bt staring point, non-overlapping
+    Insert a new interval into it, make sure the list is still in order and non-overlapping
+    (merge intervals if necessary).
+     */
+    public List<Interval> insert(List<Interval> intervals, Interval newInterval) {
+        List<Interval> result = new ArrayList<>();
+
+        //special case
+        if (intervals.size() == 0 || intervals == null) {
+            result.add(newInterval);
+        }
+
+        for (int i = 0; i < intervals.size(); i++){
+            //insert before the ith interval, add the remaining
+            if (newInterval.end < intervals.get(i).start){
+                result.add(newInterval);
+                for (int j = i; j<intervals.size(); j++){
+                    result.add(intervals.get(j));
+                }
+                break;
+            }
+            else if (newInterval.start > intervals.get(i).end){
+                result.add(intervals.get(i));
+            }else {
+                newInterval.start = Math.min(newInterval.start, intervals.get(i).start);
+                newInterval.end = Math.max(newInterval.end, intervals.get(i).end);
+            }
+            //add to last
+            if (i == intervals.size() - 1){
+                result.add(newInterval);
+            }
+        }
+        return result;
+    }
+
+
+    /*
+    # 52 Next Permutation
+    Step 1 find change position
+    Start from end to front, scan items and stop at first position where nums[p] < nums[p + 1]
+    step 2 find the number for substitution
+    Scan from right to left and stop at the first element that is greater than num[p], record the index q.
+    step 3 swap num[p] and num[q]
+    step 4 re-arrange items after position p in increasing order to make the remaining minimum
+     */
+    public int[] nextPermutation(int[] nums) {
+        // special case
+        if (nums.length <=1) return nums;
+
+        //step1
+        int p = nums.length - 2;
+        while (p >= 0 && nums[p] >= nums[p+1]) {
+            p--;
+        }
+        //step 2 & 3
+        int q = nums.length - 1;
+        if (p >= 0) {
+            while (q >= 0 && nums[q] <= nums[p]) q--;
+            swap (nums, p, q);
+        }
+        //step 4
+        reverse(nums, p+1);
+
+        return nums;
+    }
+
+    private void swap(int[] nums, int p, int q) {
+        int temp = nums[p];
+        nums[p] = nums[q];
+        nums[q] = temp;
+    }
+
+    private void reverse (int[] nums, int start){
+        int end = nums.length - 1;
+        while (start < end) {
+            swap(nums, start, end);
+            start ++;
+            end --;
+        }
+    }
+
+
+
+
+
+
+    /*
+    # 57 · 3Sum = 0
+    sort, point at an element, look for 2sum from the rest
+    No duplicates allowed. if nums[index] == nums[index -1] --> skip
+    time O(n^2)
+     */
+    public List<List<Integer>> threeSum(int[] numbers) {
+        // write your code here
+        List<List<Integer>> result = new ArrayList<>();
+        Arrays.sort(numbers);
+        for (int i = 0; i < numbers.length - 2; i++){
+            if (numbers[i] > 0) break; //sorted in ascending order, can't find negative to add
+            if (i > 0 && numbers[i] == numbers[i-1]) continue; //skip to avoid duplicates
+
+            int target = 0 - numbers[i];
+
+            int low = i+1, high = numbers.length - 1;
+            while (low < high) {
+                int tempSum = numbers[low] + numbers[high];
+                if (tempSum == target) {
+                    result.add(Arrays.asList(new Integer[]{numbers[i], numbers[low], numbers[high]}));
+                    low++;
+                    while (low < high && numbers[low] == numbers[low-1]) low++;
+
+                    high--;
+                    while (low < high && numbers[high] == numbers[high+1]) high--;
+                }else if (tempSum < target) {
+                    low++;
+                }else {
+                    high--;
+                }
+            }
+        }
+        return result;
+    }
+
+
+    /*
+    # 62 · Search in Rotated Sorted Array
+    a sorted array is rotated at some pivot unknown to you beforehand.
+    You are given a target value to search. If found in the array return its index, otherwise return -1.
+    Use modified binary search to find pivot
+    4 5 6 7 0 1 2
+     */
+    public int search(int[] A, int target) {
+        //exception
+        if (A == null || A.length == 0) return -1;
+
+        //find smallest element use modified binary search
+        int left = 0;
+        int right = A.length - 1;
+
+        while (left + 1 < right) {
+            int mid = left + (right - left)/2;
+
+            //left side is sorted, use regular binary search
+            if(A[left] < A[mid]){
+                if (A[left] <= target && target < A[mid]){
+                    right = mid;
+                }else {
+                    left = mid;
+                }
+            }else {
+                if (A[mid] < target && target <= A[right]){
+                    left = mid;
+                }else {
+                    right = mid;
+                }
+            }
+        }
+        if (A[left] == target) return left;
+        if (A[right] == target) return right;
+        return -1;
+    }
+
+
+
+    /*
+    # 104 · Merge K Sorted Lists
+    use minHeap time O(nlogk) space O(N)
+     */
+
+    public ListNode mergeKLists(List<ListNode> lists) {
+        //construct a minHeap
+        PriorityQueue<Integer> minheap = new PriorityQueue<>();
+        for (ListNode head : lists) {
+            while (head != null) {
+                minheap.add(head.val);
+                head = head.next;
+            }
+        }
+        ListNode dummy = new ListNode(-1);
+        ListNode head = dummy;
+
+        //move items from minHeap
+        while (!minheap.isEmpty()){
+            head.next = new ListNode(minheap.remove());
+            head = head.next;
+        }
+
+        return dummy.next;
+    }
+
+
+    /*
+    # 165 · Merge Two Sorted Lists
+     */
+    public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        if (l1 == null && l2 == null) return null;
+
+        ListNode dummy = new ListNode(-1);
+        ListNode tail = dummy;
+
+        while (l1 != null && l2 != null){
+            if (l1.val < l2.val){
+                tail.next = l1;
+                l1 = l1.next;
+            }else {
+                tail.next = l2;
+                l2 = l2.next;
+            }
+            tail = tail.next;
+        }
+
+        //handle remaining
+        if (l1 != null){
+            tail.next = l1;
+        }
+        if (l2 != null) {
+            tail.next = l2;
+        }
+        return dummy.next;
+    }
+
+
+    /*
+    # 107 word break
+    Given a string s and a dictionary of words dict,
+    determine if s can be broken into a space-separated sequence of one or more dictionary words.
+    Use DP
+    optimization 1: calculate max word length. when i - j > maxLen, skip
+    optimization 2: start j from the right side
+     */
+    public boolean wordBreak(String s, Set<String> wordSet) {
+        boolean[] dp = new boolean[s.length()+1];
+
+        // find maxWordLen
+        int maxWordLen = 0;
+        for (String word : wordSet){
+            maxWordLen = Math.max(maxWordLen, word.length());
+        }
+
+        dp[0] = true;
+        for (int i = 0; i <= s.length(); i++) {
+            for (int j = i - 1; j >= 0; j--) {
+                if (i - j > maxWordLen) {
+                    continue;
+                }
+                if (dp[j] && wordSet.contains(s.substring(j, i))){
+                    dp[i] = true;
+                    break;
+                }
+            }
+        }
+        return dp[s.length()];
+    }
+
+
+
+    /*
+    117 · Jump Game II
+    greedy BFS time O(N)
+    DP time O(N^2)
+    think of most far can reach
+     */
+    public int jump(int[] A) {
+        if (A == null || A.length == 0) {
+            return -1;
+        }
+
+        int start = 0, end = 0, farthest = 0;
+        int result = 0;
+
+        for (int i = 0; i < A.length - 1; i++){
+            farthest = Math.max(farthest, A[i] + i);
+            if (i == end) {
+                result++;
+                end = farthest;
+            }
+        }
+        return result;
+    }
+
+
+    /*
+    #28 Search a 2D Matrix
+    Integers in each row are sorted from left to right.
+    The first integer of each row is greater than the last integer of the previous row.
+     */
+    public boolean searchMatrix(int[][] matrix, int target) {
+        // exception
+        if (matrix == null || matrix.length == 0) return false;
+
+        int rowIndex = matrix.length - 1;
+        int columnIndex = matrix[0].length - 1;
+
+        // check target at which row
+        int start = 0;
+        int end = rowIndex;
+        while (start + 1 < end) {
+            int mid = start + (end - start)/2;
+            if (matrix[mid][0] == target) return true;
+            if (target < matrix[mid][0]){
+                end = mid;
+            }else {
+                start = mid;
+            }
+        }
+        //handle first or last row
+        if (matrix[end][0] <= target){
+            rowIndex = end;
+        }else if (matrix[start][0] <= target) {
+            rowIndex = start;
+        }else {
+            return false;
+        }
+
+        //find column index
+        start = 0;
+        end = columnIndex;
+        while (start + 1 < end) {
+            int mid = start + (end - start)/2;
+            if (matrix[rowIndex][mid] == target) return true;
+            if (matrix[rowIndex][mid] < target) {
+                start = mid;
+            }else {
+                end = mid;
+            }
+        }
+        //check if exist
+        if (matrix[rowIndex][start] == target) return true;
+        if (matrix[rowIndex][end] == target) return true;
+        return false;
+    }
+
+
+
+    /*
+    #737 Find a element that appear in all the rows
+     */
+    public int FindElements(int[][] Matrix) {
+        List<Integer> list = new ArrayList<>();
+
+        int rowLen = Matrix.length;
+        int columnLen = Matrix[0].length;
+
+        //loop first row, find possible keys
+        for (int i = 0; i < columnLen; i++){
+            list.add(Matrix[0][i]);
+        }
+
+        for (int i = 1; i < rowLen; i++){
+            Set<Integer> set = new HashSet<>();
+            for (int j = 0; j < columnLen; j++){
+                set.add(Matrix[i][j]);
+            }
+            for (int j = 0; j < list.size(); j++){
+                if (!set.contains(list.get(j))){
+                    list.remove(list.get(j));
+                }
+            }
+        }
+        return list.get(0);
+    }
+
+
+    /*
+    two sum hashMap method
+     */
+    public int[] twoSumHashMap(int[] numbers, int target) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for(int number : numbers){
+            if(!map.containsKey(number)){
+                map.put(number, 1);
+            }else {
+                map.put(number, map.get(number) +1);
+            }
+        }
+        int a = 0, b = 0;
+        for (int key : map.keySet()) {
+            int missing = target - key;
+            if (map.containsKey(missing)) {
+                if (missing != key) {
+                    a = key;
+                    b = missing;
+                }
+                if (missing == key && map.get(missing) > 1){
+                    a = key;
+                    b = missing;
+                }
+
+            }
+        }
+        int count = 0;
+        int[] result = new int[2];
+
+        if (a != b){
+            HashMap<Integer, Integer> mapIndex = new HashMap<>();
+            for(int number : numbers){
+                mapIndex.put(number, count++);
+            }
+            result[0] = mapIndex.get(a);
+            result[1] = mapIndex.get(b);
+        }
+
+        int i, j;
+        if(a == b){
+            for(i = 0; i < numbers.length; i++){
+                if(a == numbers[i]){
+                    result[0] = i;
+                    break;
+                }
+            }
+            for(j = i+1; j < numbers.length; j++){
+                if(b == numbers[j]){
+                    result[1] = j;
+                }
+
+            }
+        }
+        Arrays.sort(result);
+        return result;
+    }
+
+
+
+    /*
+    # 69 · Binary Tree Level Order Traversal
+     */
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List result = new ArrayList();
+
+        if (root == null) return result;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+
+        while (!queue.isEmpty()){
+            List level = new ArrayList();
+            int size = queue.size();
+            for (int i = 0; i < size; i++){
+                TreeNode head = queue.poll();
+                level.add(head.val);
+                if (head.left != null){
+                    queue.offer(head.left);
+                }
+                if (head.right != null){
+                    queue.offer(head.right);
+                }
+            }
+            result.add(level);
+        }
+        return result;
+    }
+
+    private int treeHeight (TreeNode root){
+        if (root == null) return 0;
+
+        int lHeight = treeHeight(root.left);
+        int rHeight = treeHeight(root.right);
+
+        //return the larger number + root level
+        if (lHeight > rHeight) {
+            return lHeight + 1;
+        }else {
+            return rHeight +1;
+        }
+    }
+
+
+
+
 
 
 
