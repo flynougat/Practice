@@ -190,6 +190,27 @@ public class LintCode {
     }
 
 
+    /*
+     # 488 Happy Number
+     HashSet to check if the number already exist. If so, break the loop and return false
+     */
+    public boolean isHappy(int n) {
+        HashSet<Integer> seen = new HashSet<>();
+        while (n != 1){
+            int current = n;
+            int sum = 0;
+            while (current != 0){
+                sum += (current % 10) * (current % 10);
+                current /= 10;
+            }
+
+            if (seen.contains(sum)) return false;
+
+            seen.add(sum);
+            n = sum;
+        }
+        return true;
+    }
 
 
 
@@ -1042,6 +1063,7 @@ public class LintCode {
 
 
 
+
     /* ************************************************************************
        DP + BFS
        ************************************************************************
@@ -1239,6 +1261,45 @@ public class LintCode {
         return dp[s.length()];
     }
 
+    /*
+     # 422 Length of Last Word
+     - Method 1: Use String.split()
+     - Method 2: Use trim
+     - Method 3: Array, count from tail until " "
+     Example
+     Input: "Hello World"
+     Output: 5
+     */
+    public int lengthOfLastWord(String s) {
+        //Method 1: Use String.split()
+//        String[] words = s.split(" ");
+//        return words.length == 0 ? 0 : words[words.length - 1].length();
+
+        //Method 2: Use trim
+//        return s.trim().length() - s.trim().lastIndexOf(" ") - 1;
+
+        //Method 3: Array
+        int length = 0;
+        char[] chars = s.toCharArray();
+        for (int i = s.length() - 1; i >= 0; i--) {
+            if (length == 0) {
+                if (chars[i] == ' ') {
+                    continue;
+                } else {
+                    length++;
+                }
+            } else {
+                if (chars[i] == ' ') {
+                    break;
+                } else {
+                    length++;
+                }
+            }
+        }
+        return length;
+    }
+
+
 
 
     /* ************************************************************************
@@ -1419,7 +1480,7 @@ public class LintCode {
     }
 
 
-    
+
     /* ****************************************************************************
        Backtracking / DFS
        ****************************************************************************
@@ -1480,9 +1541,89 @@ public class LintCode {
     }
 
 
+    /*
+    # 427 Generate Parentheses
+    Backtracking
+     */
+    public List<String> generateParenthesis(int n) {
+        List<String> result = new ArrayList<>();
+        generateParenthesisHelper(result, "", 0, 0, n);
+        return result;
+    }
+    private void generateParenthesisHelper(List<String> result, String current, int open, int close, int nPair) {
+        if (current.length() == nPair * 2) {
+            result.add(current);
+            return;
+        }
+        if (open < nPair){
+            generateParenthesisHelper(result, current + "(", open + 1, close, nPair);
+        }
+        if (close < open){
+            generateParenthesisHelper(result, current + ")", open, close + 1, nPair);
+        }
+    }
 
 
+    /*
+     # 33 N-Queens
+     Backtracking
+     Try to place Q on each tile and see if it works. If works, recurse through with the updated board and repeat.
+     Use column and row indices to check.
+     Translate board into a list and add the list to result lists.
+     Return result lists
+     time and space complexity O(N!)
+     */
+    public List<List<String>> solveNQueens(int n) {
+        List<List<String>> result = new ArrayList<>();
 
+        if (n <=0) return result;
+
+        solveNQueensHelper(result, new ArrayList<>(), n);
+
+        return result;
+    }
+    private void solveNQueensHelper(List<List<String>> result, List<Integer> cols, int size){
+        if (cols.size() == size){
+            result.add(draw(cols));
+            return;
+        }
+
+        //enumerate Q positions, if not valid, continue
+        for (int colIndex = 0; colIndex < size; colIndex++){
+            if (!isValidQ(cols, colIndex)) continue;
+
+            //if valid, recurse
+            cols.add(colIndex);
+            solveNQueensHelper(result, cols, size);
+            cols.remove(cols.size() - 1);
+        }
+    }
+    //check if tile is valid Q
+    private boolean isValidQ(List<Integer> cols, int col){
+        int row = cols.size();
+        for (int rowIndex = 0; rowIndex < cols.size(); rowIndex++){
+            //same col or diagonal, false
+            if (cols.get(rowIndex) == col ||
+                row + col == rowIndex + cols.get(rowIndex) ||
+                    row - col == rowIndex - cols.get(rowIndex)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //transfer column integer to result string
+    private List<String> draw(List<Integer> cols) {
+        List<String> resultDraw = new ArrayList<>();
+        for (int i = 0; i < cols.size(); i++){
+            StringBuilder sb = new StringBuilder();
+            for (int j = 0; j < cols.size(); j++){
+                sb.append(j == cols.get(i) ? 'Q' : '.');
+            }
+            resultDraw.add(sb.toString());
+        }
+        return resultDraw;
+    }
 
 
 
