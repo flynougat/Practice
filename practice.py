@@ -4,6 +4,9 @@ import heapq
 from os import system
 import sys
 from typing import Counter
+from typing import (
+    List,
+)
 
 class Solution:
 
@@ -95,6 +98,28 @@ class Solution:
         
         return sum(stack)
 
+
+    # 363 · Trapping Rain Water 
+    # 用单调递减栈，当heights[i] >= heights[stack[-1]], pop 栈直到栈顶大于当前数，压栈，并算盛水量
+    # also can use Tow Pointer
+    def trapRainWater(self, heights):
+        if not heights: return 0
+
+        result = 0
+        stack = []
+
+        for i, height in enumerate(heights):
+            while stack and height >= heights[stack[-1]]:
+                ground_height = heights[stack.pop()]
+                if not stack:
+                    continue
+                low_index = stack[-1]
+                water_line = min(heights[low_index], height)
+                result += (water_line - ground_height) * (i - low_index - 1)
+
+            stack.append(i)
+        
+        return result
 
 
 
@@ -212,7 +237,10 @@ class Solution:
                 right += 1 if i == '(' else -1
         return left + right
 
-        
+
+    # 1876 · Alien Dictionary(easy)
+    #def isAlienSorted(self, words, order):
+
 ####################### Matrix ###########################
 
     # 433 · Number of Islands
@@ -512,6 +540,86 @@ class Solution:
         return globalMax
 
 
+    # 1901 · Squares of a Sorted Array
+    def SquareArray(self, A: List[int]) -> List[int]:
+        return sorted([x**2 for x in A])
+
+
+    # 149 · Best Time to Buy and Sell Stock
+    def maxProfit(self, prices):
+        if len(prices) == 0: return 0
+
+        min_price = prices[0]
+        max_profit = 0
+
+        for price in prices:
+            min_price = min(price, min_price)
+            max_profit = max(price - min_price, max_profit)
+
+        return max_profit
+
+
+    # 402 · Continuous Subarray Sum 
+    # find a continuous subarray where the sum of numbers is the biggest. 
+    # Your code should return the index of the first number and the index of the last number. 
+    # (If their are duplicate answer, return the minimum one in lexicographical order)
+    # Greedy
+    def continuousSubarraySum(self, A):
+        n = len(A)
+        max_sum = A[0]  # 全局最大连续子数组和
+        sum = 0  # 当前元素必选的最大和
+        first = last = 0  # first, last表示全局最大连续子数组的左右端点
+        begin = 0  # 当前连续子数组的左端点
+
+        for i in range(n):
+            if sum >= 0:
+                sum += A[i]
+            else:
+                begin = i
+                sum = A[i]
+            if max_sum < sum:
+                max_sum = sum
+                first = begin
+                last = i
+
+        return [first, last]
+
+    # 412 Candy 
+    # Each child must have at least one candy.
+    # Children with a higher rating get more candies than their neighbors.
+    # Input: [1, 2, 2] Output: 4
+    def candy(self, ratings):
+        n = len(ratings)
+        candyNum = [1] * n
+
+        for i in range(1, n):
+            if ratings[i] > ratings[i-1]:
+                candyNum[i] = candyNum[i-1] + 1
+        for i in range(n - 2, -1, -1):     # range(start, stop, step)
+            if ratings[i+1] < ratings[i] and candyNum[i+1] >= candyNum[i]:
+                candyNum[i] = candyNum[i+1] + 1
+        
+        return sum(candyNum)
+
+
+    # 1393 · Friends Of Appropriate Ages
+    def numFriendRequests(self, ages):
+        def request(a, b):
+            return not (b <= 0.5 * a + 7 or b > a or b > 100 and a < 100)
+
+        c = collections.Counter(ages)
+        result = 0
+
+        for a in c.keys():
+            for b in c.keys():
+                if request(a, b):
+                    if a != b:
+                        result += c[a] * c[b]
+                    else:
+                        result += c[a] * (c[b] - 1)
+                
+        return result
+
 ####################### Two Pointers ###########################
 
     # 891 · Valid Palindrome II
@@ -538,6 +646,27 @@ class Solution:
         return True
 
 
+    # 3sum
+    # Given an array S of n integers, are there elements a, b, c in S such that a + b + c = 0
+    # target = -a， 找到满足 b + c = target 的数字
+    def threeSum(self, numbers):
+        if not numbers or len(numbers) < 3:
+            return []
+        
+        result = []
+
+        for i in range(len(numbers) - 2):
+            target = - numbers[i]
+            dict = {}
+            for j in range(i+1, len(numbers)):
+                if target - numbers[j] in dict:
+                    temp_result = sorted([numbers[i], numbers[j], target - numbers[j]])
+                    if temp_result not in result:
+                        result.append(temp_result)
+                else:
+                    dict[numbers[j]] = j
+
+        return result
 
 
 
@@ -574,6 +703,13 @@ class Solution:
 
 
 
+    # 1702 · Distinct Subsequences II 
+    # Given a string S, count the number of distinct, non-empty subsequences of S .
+    # def distinctSubseqII(self, S):
+    #    n = len(S)
+        
+
+
 
 
 ####################### Graph ###########################
@@ -602,3 +738,23 @@ class Solution:
             elif self.color[nxt] == self.color[now]:
                 return False
         return True
+
+
+####################### Meeting Room ###########################
+
+class Interval(object):
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+    
+# 920 · Meeting Rooms
+# determine if a person could attend all meetings
+def canAttendMeetings(self, intervals):
+    # sort by start time
+    intervals = sorted(intervals, key = lambda x : x.start)
+
+    for i in range(len(intervals) - 1):
+        if intervals[i].end > intervals[i+1].start:
+            return False
+    
+    return True
