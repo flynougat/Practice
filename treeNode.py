@@ -254,3 +254,60 @@ class Solution:
                     queue.append(node.right)
             
         return result
+
+
+# 1506 · All Nodes Distance K in Binary Tree 
+# Return a list of the values of all nodes that have a distance K from the target node. 
+# The answer can be returned in any order.
+# Step 1: tree to graph, find neighbors
+# Step 2: BFS find k distance neighbors
+    def treeToGraph(self, root):
+        adjList = {}
+        queue = collections.deque()
+        queue.append(root)
+
+        while queue:
+            curr = queue.popleft()
+            if curr not in adjList:
+                adjList[curr] = []
+            if curr.left:
+                adjList[curr].append(curr.left)
+                if curr.left not in adjList:
+                    adjList[curr.left] = []
+                adjList[curr.left].append(curr)
+                queue.append(curr.left)
+            if curr.right:
+                adjList[curr].append(curr.right)
+                if curr.right not in adjList:
+                    adjList[curr.right] = []
+                adjList[curr.right].append(curr)
+                queue.append(curr.right)
+        return adjList
+
+    def distanceK(self, root, target, K):
+        if not root or not target:
+            return []
+        elif K == 0:
+            return [target.val]
+        
+        adjList = self.treeToGraph(root)
+
+        #BFS
+        result = []
+        depth = 0
+        visited = set()
+        queue = collections.deque()
+        queue.append(target)
+
+        while queue and depth <= K:
+            for _ in range(len(queue)):
+                curr = queue.popleft()
+                if curr not in visited:
+                    for child in adjList[curr]:
+                        queue.append(child)
+                    if depth == K:
+                        result.append(curr.val)
+                visited.add(curr)
+            depth += 1
+
+        return result

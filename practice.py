@@ -620,6 +620,99 @@ class Solution:
                 
         return result
 
+
+    # 148 Sort Colors 
+    # Given an array with n objects colored red, white or blue, 
+    # sort them so that objects of the same color are adjacent, 
+    # with the colors in the order red 0, white 1 and blue 2. 
+    # left 的左侧都是 0（不含 left）
+    # right 的右侧都是 2（不含 right）
+    # index 从左到右扫描每个数，如果碰到 0 就丢给 left，碰到 2 就丢给 right。碰到 1 就跳过不管
+    def sortColors(self, nums):
+        left, index, right = 0, 0, len(nums) - 1
+        while index <= right:
+            if nums[index] == 0:
+                nums[left] , nums[index] = nums[index], nums[left]
+                left += 1
+                index += 1
+            elif nums[index] == 2:
+                nums[right] , nums[index] = nums[index], nums[right]
+                right -= 1
+            else:
+                index += 1
+
+
+    # 539 · Move Zeroes 
+    # move all 0's to the end of it while maintaining the relative order of the non-zero elements
+    def moveZeroes(self, nums):
+        index = 0
+        for num in nums:
+            if num != 0:
+                nums[index] = num
+                index += 1
+            for i in range(index, len(nums)):
+                nums[i] = 0
+        return nums
+
+
+    # 767 · Reverse Array
+    def reverseArray(self, nums):
+        i, j = 0, len(nums) - 1
+        while i < j:
+            temp = nums[i]
+            nums[i] = nums[j]
+            nums[j] = temp
+            i += 1
+            j -= 1
+        return nums
+
+
+
+    # 41 · Maximum Subarray 
+    # Given an array of integers, find a contiguous subarray which has the largest sum.
+    # --------- prefix sum method ----------
+    # 根据公式 Sum[i..j] = PrefixSum[j] - PrefixSum[i - 1]，
+    # 在 PrefixSum[j] 固定的情况下，为了使 Sum[i..j] 最大，PrefixSum[i - 1] 需要最小，
+    # 所以需要记录已经遍历的数字中最小的 PrefixSum。
+    def maxSubArrayPrefix(self, nums):
+        min_prefix, curr_prefix = 0, 0
+        max_result = - sys.maxsize - 1
+
+        for num in nums:
+            curr_prefix += num
+            max_result = max(max_result, curr_prefix - min_prefix)
+            min_prefix = min(min_prefix, curr_prefix)
+        
+        return max_result
+
+    # 41 · Maximum Subarray 
+    # Given an array of integers, find a contiguous subarray which has the largest sum.
+    # --------- greedy method ----------
+    def maxSubArrayGreedy(self, nums):
+        # max_result记录全局最大值 curr_sum记录当前子数组的和
+        max_result = - sys.maxsize - 1
+        curr_sum = 0
+
+        for num in nums:
+            curr_sum += num
+            max_result = max(max_result, curr_sum)
+            curr_sum = max(curr_sum, 0)
+        
+        return max_result
+
+    # 41 · Maximum Subarray 
+    # Given an array of integers, find a contiguous subarray which has the largest sum.
+    # --------- DP method ----------
+    def maxSubArrayDP(self, nums):
+        dp = [0 for x in range(len(nums))]
+        dp[0] = nums[0]
+        for i in range(1, len(nums)):
+            dp[i] = max(0, dp[i-1] + nums[i])
+        max_result = -sys.maxsize - 1
+        for i in dp:
+            max_result = max(max_result, i)
+        return max_result
+
 ####################### Two Pointers ###########################
 
     # 891 · Valid Palindrome II
