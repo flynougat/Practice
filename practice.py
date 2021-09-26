@@ -294,6 +294,50 @@ class Solution:
                     queue.append((dx + x, dy + y))
 
 
+    # 598 · Zombie in Matrix
+    # multiple sources BFS
+    # 0, human, 1, zombie, 2, wall. Zombies can turn the nearest people(up/down/left/right) into zombies every day
+    # step 1 traverse matrix to find zombie and count total human
+    # step 2 BFS, use visited set() instead of modifying matrix to track contanminated human
+    def zombie(self, grid):
+        if not grid or not grid[0]:
+            return -1
+
+        m, n = len(grid), len(grid[0])
+        queue = collections.deque()
+        count = 0
+
+        # step 1
+        for x in range(m):
+            for y in range(n):
+                if grid[x][y] == 1:
+                    queue.append((x, y))
+                elif grid[x][y] == 0:
+                    count += 1
+        
+        # step 2
+        DIR = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        step = 0
+        visited = set()
+        while queue:
+            step += 1
+            for _ in range(len(queue)):
+                x, y = queue.popleft()
+                for dx, dy in DIR:
+                    x_next, y_next = x + dx, y + dy
+                    if 0 <= x_next < m and 0 <= y_next < n and grid[x_next][y_next] == 0 and (x_next, y_next) not in visited:
+                        queue.append((x_next, y_next))
+                        visited.add((x_next, y_next))
+
+        if len(visited) == count:
+            return step - 1
+        
+        return -1
+
+        
+
+
+
 
 
     # 1272 · Kth Smallest Element in a Sorted Matrix
@@ -371,6 +415,11 @@ class Solution:
         return True
 
 
+    # 598 · Zombie in Matrix
+    def zombie(self, grid):
+
+
+
 
 ####################### Topological Sort ###########################
     # 拓扑排序步骤：
@@ -384,6 +433,31 @@ class Solution:
 
     # 615 · Course Schedule
     def canFinish(self, numCourses, prerequisites):
+        # count indegrees
+        edges = {i:[] for i in range(numCourses)}
+        degrees = [0 for i in range(numCourses)]
+        for curr, pre in prerequisites:
+            edges[pre].append(curr)
+            degrees[curr] += 1
+
+        # push 0 indegree to queue
+        queue = collections.deque([])
+        count = 0
+
+        for i in range(numCourses):
+            if degrees[i] == 0:
+                queue.append(i)
+
+        while queue:
+            node = queue.popleft()
+            count += 1
+            for e in edges[node]:
+                degrees[e] -= 1
+                if degrees[e] == 0:
+                    queue.append(e)
+
+        return count == numCourses
+
 
 
 
@@ -418,6 +492,23 @@ class Solution:
         else:
             return []
 
+#     def findOrder(self, numCourses, prerequisites):
+#         lessons = dict()
+#         for i in range(numCourses):
+#             lessons[i] = Lesson(i)
+#         for i in prerequisites:
+#             pre_lesson_value = i[1]
+#             pre_lesson = lessons[pre_lesson_value]
+#             current_lesson_value = i[0]
+#             current_lesson = lessons[current_lesson_value]
+#             pre_lesson.next_lessons.append(current_lesson)
+#             current_lesson.pre_lessons = current_lesson.pre_lessons + 1
+        
+    # class Lesson:
+    #     def __init__(self, value):
+    #         self.value = value
+    #         self.next_lessons = []
+    #         self.pre_lessons = 0
 
 ####################### Array ###########################
 
@@ -873,10 +964,10 @@ class Solution:
 
 
     # 137 · Clone Graph
-    class UndirectedGraphNode:
-        def __init__(self, x):
-            self.label = x
-            self.neighbors = []
+class UndirectedGraphNode:
+    def __init__(self, x):
+        self.label = x
+        self.neighbors = []
 
     def cloneGraph(self, node):
         if not node:
