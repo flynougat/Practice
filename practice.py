@@ -238,6 +238,30 @@ class Solution:
         return left + right
 
 
+
+    # 1299 · Bulls and Cows
+    def getHint(self, secret, guess):
+        secret_count = {str(i): 0 for i in range(0, 10)}
+        guess_count = {str(i): 0 for i in range(0, 10)}
+
+        count_A = 0
+        for i in range(len(secret)):
+            if secret[i] == guess[i]:
+                count_A += 1
+            else:
+                secret_count[secret[i]] += 1
+                guess_count[guess[i]] += 1
+
+        count_B = 0
+        for num in guess_count:
+            count_B += min(secret_count[num], guess_count[num])
+
+        return str(count_A) + 'A' + str(count_B) + 'B'
+
+
+
+
+
     # 1876 · Alien Dictionary(easy)
     #def isAlienSorted(self, words, order):
 
@@ -349,7 +373,21 @@ class Solution:
 
 
 ####################### Topological Sort ###########################
-    
+    # 拓扑排序步骤：
+    # 1.建图并记录所有节点的入度。
+    # 2.将所有入度为0的节点加入队列。
+    # 3.取出队首的元素now，将其加入拓扑序列。
+    # 4.访问所有now的邻接点nxt，将nxt的入度减1，当减到0后，将nxt加入队列。
+    # 5.重复步骤3、4，直到队列为空。
+    # 6.如果拓扑序列个数等于节点数，代表该有向图无环，且存在拓扑序。
+    # Time and Space O(V+E)
+
+    # 615 · Course Schedule
+    def canFinish(self, numCourses, prerequisites):
+
+
+
+
     # 616 · Course Schedule II
 
     def findOrder(self, numCourses, prerequisites):
@@ -831,6 +869,54 @@ class Solution:
             elif self.color[nxt] == self.color[now]:
                 return False
         return True
+
+
+
+    # 137 · Clone Graph
+    class UndirectedGraphNode:
+        def __init__(self, x):
+            self.label = x
+            self.neighbors = []
+
+    def cloneGraph(self, node):
+        if not node:
+            return None
+
+        # 1. find nodes
+        nodes = self.findNodeBFS(node)
+        # 2. copy nodes
+        mapping = self.copyNode(nodes)
+        # 3. copy edges
+        self.copyEdges(nodes, mapping)
+
+        return mapping[node]
+
+    def findNodeBFS(self, node):
+        queue = collections.deque([node])
+        visited = set([node])
+        while queue:
+            curr = queue.popleft()
+            for neighbor in curr.neighbors:
+                if neighbor in visited:
+                    continue
+                queue.append(neighbor)
+                visited.add(neighbor)
+
+        return list(visited)
+
+    def copyNode(self, nodes):
+        mapping = {}
+        for node in nodes:
+            mapping[node] = UndirectedGraphNode(node.label)
+        
+        return mapping
+
+    def copyEdges(self, nodes, mapping):
+        for node in nodes:
+            new_node = mapping[node]
+            for neighbor in node.neighbors:
+                new_neighbor = mapping[neighbor]
+                new_node.neighbors.append(new_neighbor)
 
 
 ####################### Meeting Room ###########################
