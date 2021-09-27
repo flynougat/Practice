@@ -260,6 +260,67 @@ class Solution:
 
 
 
+    # 53 · Reverse Words in a String
+    # step 1: strip, if front or end has space
+    # step 2: split
+    # step 3: reverse
+    # step 4: join
+    def reverseWords(self, s):
+        if not s:
+            return ''
+
+        s.strip()
+        s_list = s.split()
+        s_reversed = reversed(s_list)
+        return ' '.join(s_reversed)
+    # oneline solution
+    # return ' '.join(reversed(s.strip().split()))
+    # If you need to access individual elements of a list in reverse order, it’s better to use reversed() or list[::-1]
+
+
+    # 914 Flip Game 
+    # Given a string that contains only two characters: + and -, 
+    # you can flip two consecutive "++" into "--", you can only flip one time. 
+    # Please find all strings that can be obtained after one flip.
+    def generatePossibleNextMoves(self, s):
+        if not s or len(s) < 2:
+            return []
+
+        index_holder = collections.deque()
+        for i in range(len(s) - 1):
+            if s[i] == '+' and s[i+1] == '+':
+                index_holder.append(i)
+
+        result = []
+        while index_holder:
+            position = index_holder.popleft()
+            for i in range(len(s) - 1):
+                if i == position:
+                    temp = s[:i] + '--' + s[i+2:]
+                    result.append(temp)
+
+        return result
+
+
+
+    # 888 · Valid Word Square 
+    # the k^th row and column read the exact same string
+    def validWordSquare(self, words):
+        m = len(words)
+        n = len(words[0])
+
+        if m != n:
+            return False
+
+        for row_idx in range(m):
+            col_idx = row_idx
+            row_word = words[row_idx][:n]
+            col_word = words[:m][col_idx]
+            if row_word != col_word:
+                return False
+
+        return True
+
 
 
     # 1876 · Alien Dictionary(easy)
@@ -334,8 +395,10 @@ class Solution:
         
         return -1
 
+    
+    # 1723 · Shortest Path in a Grid with Obstacles Elimination
+    def shortestPath(self, grid, k):
         
-
 
 
 
@@ -509,6 +572,8 @@ class Solution:
     #         self.value = value
     #         self.next_lessons = []
     #         self.pre_lessons = 0
+
+
 
 ####################### Array ###########################
 
@@ -924,6 +989,86 @@ class Solution:
 
 
 
+    # 257 Longest String Chain  
+    # word1 is a predecessor of word2 if and only if we can add exactly one letter anywhere in word1 
+    # to make it equal to word2.  For example, "abc" is a predecessor of "abac".
+    # step 1, sort by length from low to high
+    # step 2, multiple branches give intuition for memorization (use a map)
+    # step 3, check if there exists entry in map for word by deleting a char from previous string by 1
+
+    def longestStrChain(self, words):
+        if len(words) <= 1:
+            return len(words)
+
+        # step 1 sort by length low to high
+        words = sorted(words, key = lambda w : len(w))
+        word_dict = {w: idx for idx, w in enumerate(words)}
+        # 先从enumerate(words)提取 idx, w， 再放入dictionary
+
+        # word_dict = dict()
+        # for i in range(len(words)):
+        #     word = words[i]
+        #     word_dict[word] = i
+
+        dp = [1] * len(words)
+        for i in range(1, len(words)):
+            # remove jth letter in ith word and check if it exists in set
+            for j in range(len(words[i])):
+                temp = words[i][:j] + words[i][j+1:]
+                if temp in word_dict:
+                    idx = word_dict[temp]
+                    dp[i] = max(dp[i], dp[idx] + 1)
+
+        return max(dp) 
+
+
+
+    # 514 · Paint Fence
+    # dp[i-1]×(k-1)代表当前格子的颜色和前一个不同的方案
+    # dp[i-2]×(k-1)代表当前格子的颜色和前一个相同的方案
+    # dp[i]=(k-1)×(dp[i-1]+dp[i-2])
+    def numWays(self, n, k):
+        # base case
+        dp = [0, k, k*k]
+        if n <= 2:
+            return dp[n]
+
+        if k == 1 and n >= 3:
+            return 0
+
+        for i in range(2, n):
+            dp.append((k-1)*(dp[-1] + dp[-2]))
+
+        return dp[-1]
+
+        
+    # 1432 · New 21 Game
+    def new21Game(self, N, K, W):
+        if N >= K+W-1:
+            return 1.0
+        if N < K:
+            return 0.0
+
+        dp = [0.0] * (K+W)
+        prob = float(1) / float(W)
+        dp[0] = 1.0
+        sum = 1.0
+
+        for i in range(1, K+W):
+            dp[i] = prob * sum
+            if i < K:
+                sum += dp[i]
+            if i - W >= 0:
+                sum -= dp[i-W]
+
+        result = 0.0
+        for i in range(K, N+1):
+            result += dp[i]
+
+        return result
+
+
+
 
     # 1702 · Distinct Subsequences II 
     # Given a string S, count the number of distinct, non-empty subsequences of S .
@@ -1012,19 +1157,77 @@ class UndirectedGraphNode:
 
 ####################### Meeting Room ###########################
 
-class Interval(object):
-    def __init__(self, start, end):
-        self.start = start
-        self.end = end
-    
-# 920 · Meeting Rooms
-# determine if a person could attend all meetings
-def canAttendMeetings(self, intervals):
-    # sort by start time
-    intervals = sorted(intervals, key = lambda x : x.start)
+    class Interval(object):
+        def __init__(self, start, end):
+            self.start = start
+            self.end = end
+        
+    # 920 · Meeting Rooms
+    # determine if a person could attend all meetings
+    def canAttendMeetings(self, intervals):
+        # sort by start time
+        intervals = sorted(intervals, key = lambda x : x.start)
 
-    for i in range(len(intervals) - 1):
-        if intervals[i].end > intervals[i+1].start:
-            return False
-    
-    return True
+        for i in range(len(intervals) - 1):
+            if intervals[i].end > intervals[i+1].start:
+                return False
+        
+        return True
+
+
+
+####################### Other ###########################
+
+    # 407 · Plus One
+    # Input: [1,2,3] Output: [1,2,4]
+    def plusOne(self, digits):
+        str_holder = ''
+        for i in digits:
+            str_holder += str(i)
+        
+        # convert str to number
+        number_add = int(str_holder) + 1
+
+        result = []
+        str_number_add = str(number_add)
+        for i in range(len(str_number_add)):
+            result.append(int(str_number_add[i]))
+
+        return result
+
+
+    # 1871 · Maximum moment
+    def MaximumMoment(self, time: str) -> str:
+        result = ''
+
+        if time[0] == '?':
+            if time[1] > '3' and time[1] <= '9':
+                result += '1'
+            else:
+                result += '2'
+        else:
+            result += time[0]
+
+        if time[1] == '?':
+            if result[0] == '2':
+                result += '3'
+            else:
+                result += '9'
+        else:
+            result += time[1]
+
+        result += ':'
+
+        if time[3] == '?':
+            result += '5'
+        else:
+            result += time[3]
+
+        if time[4] == '?':
+            result += '9'
+        else:
+            result += time[4]
+
+        return result
+        
+
