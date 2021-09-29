@@ -397,8 +397,41 @@ class Solution:
 
     
     # 1723 · Shortest Path in a Grid with Obstacles Elimination
+    # Use 3D BFS to track (i, j) and remaining k
     def shortestPath(self, grid, k):
+        from queue import Queue
+        que = Queue()
+        que.put((0,0,k))
+        level = 0
+        visited = {(0,0) : k}
+        DIR = [(0, -1), (0, 1), (-1, 0), (1, 0)]
         
+        while not que.empty():
+            n = que.qsize()
+            level += 1
+            for _ in range(n):
+                x, y, remainingK = que.get()
+                if (x, y) == (len(grid) - 1, len(grid[0]) - 1): # boundary
+                    return level - 1
+                for dx, dy in DIR:
+                    next_x, next_y = x + dx, y + dy
+                    if next_x >= len(grid) or next_x < 0 or next_y >= len(grid[0]) or next_y < 0:
+                        continue
+                    if grid[next_x][next_y] == 0:
+                        if (next_x, next_y) not in visited or remainingK > visited[(next_x, next_y)]:
+                            que.put((next_x, next_y, remainingK))
+                            visited[(next_x, next_y)] = remainingK
+                    else:
+                        if remainingK == 0:
+                            continue
+                        if (next_x, next_y) not in visited or remainingK - 1 > visited[(next_x, next_y)]:
+                            que.put((next_x, next_y, remainingK - 1))
+                            visited[(next_x, next_y)] = remainingK - 1
+
+        return -1
+
+
+
 
 
 
@@ -476,12 +509,6 @@ class Solution:
                 if matrix[i][j] != matrix[i+1][j+1]:
                     return False
         return True
-
-
-    # 598 · Zombie in Matrix
-    def zombie(self, grid):
-
-
 
 
 ####################### Topological Sort ###########################
