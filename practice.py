@@ -273,7 +273,7 @@ class Solution:
         s_list = s.split()
         s_reversed = reversed(s_list)
         return ' '.join(s_reversed)
-    # oneline solution
+    # one line solution
     # return ' '.join(reversed(s.strip().split()))
     # If you need to access individual elements of a list in reverse order, it’s better to use reversed() or list[::-1]
 
@@ -321,6 +321,52 @@ class Solution:
 
         return True
 
+
+
+    # 171 · Anagrams 
+    # If a string is Anagram,there must be another string with the same letter set but different order in S.
+    # get each string and put each letter into a list, sort list and re-join as string
+    # use a map to record, key: sorted string. value: list of original strings who have the same letters but different order
+    # if length of value list > 1, add to result 
+    def anagrams(self, strs):
+        if not strs:
+            return []
+
+        result = []
+        result_map = {}
+
+        for string in strs:
+            list_string = sorted(list(string))
+            sorted_str = ''.join(list_string)
+            if sorted_str not in result_map:
+                result_map[sorted_str] = [string]
+            else:
+                result_map[sorted_str].append(string)
+
+        for value in result_map.values():
+            if len(value) > 1:
+                result.extend(value)
+
+        return result
+
+
+    # 419 · Roman to Integer
+    # create a rom-digit map
+    # scan from left to right, if s[i] < s[i+1] -> result -= s[i]
+    # CM = 900 = 1000 - 100 = -C + M 
+    def romanToInt(self, s):
+        digit = [1000, 500, 100, 50, 10, 5, 1]
+        rom = ['M', 'D', 'C', 'L', 'X', 'V', 'I']
+        roman_map = dict(zip(rom, digit))
+
+        result = 0
+        for i in range(len(s) - 1):
+            if roman_map[s[i]] < roman_map[s[i+1]]:
+                result -= roman_map[s[i]]
+            else:
+                result += roman_map[s[i]]
+        
+        return result + roman_map[s[-1]]
 
 
     # 1876 · Alien Dictionary(easy)
@@ -1096,6 +1142,36 @@ class Solution:
 
 
 
+    
+    # 1835 · Number of Ways to Stay in the Same Place After Some Steps I
+    # dp[i][j] = at steps i and index j, how many ways we can get t0 here
+    # return [steps][0]
+    # dp[i][j] = dp[i-1][j] + dp[i-1][j-1] + dp[i-1][j+1] means stay + move left + move right
+    def numWays(self, steps, arrLen):
+        if arrLen == 1:
+            return steps
+
+        m = steps
+        n = min(arrLen, steps)
+
+        dp_pre = [0] * n
+        dp_pre[0] = 1
+        dp_cur = [0] * n
+
+        for i in range(1, m+1):
+            for j in range(n):
+                if j == 0:
+                    dp_cur[j] = dp_pre[j] + dp_pre[j+1]
+                elif j == n - 1:
+                    dp_cur[j] = dp_pre[j] + dp_pre[j-1]
+                else:
+                    dp_cur[j] = dp_pre[j] + dp_pre[j-1] + dp_pre[j+1]
+            dp_pre = dp_cur
+            dp_cur = [0] * n
+            
+        return dp_pre[0] % (10**9 + 7)
+
+
 
     # 1702 · Distinct Subsequences II 
     # Given a string S, count the number of distinct, non-empty subsequences of S .
@@ -1258,3 +1334,77 @@ class UndirectedGraphNode:
         return result
         
 
+    # 1812 · Rotation Number
+    def RotationNumber(self, n):
+        results = []
+        for i in range(1, n + 1):
+            if self.rotate(i, n):
+                results.append(i)
+        return results
+
+    def rotate(self, n, limit):
+        rotate_map = { 0:0, 6:9, 9:6, 8:8}
+        old_num = n
+        new_num = 0
+        base = 1
+        while n > 0:
+            digit = n % 10
+            if digit not in rotate_map:
+                return None
+            else:
+                digit = rotate_map[digit]
+            new_num += base * digit
+            n //= 10
+            base *= 10
+        return new_num if old_num != new_num and new_num <= limit else None
+
+
+    
+    # 1324 Count Primes
+    def countPrimes(self,n):
+        if n == 0 or n == 1:
+            return 0
+        primes = [1] * n  # assume all numbers are primes
+        primes[0] = 0
+        primes[1] = 0     # 0 and 1 are not primes
+
+        result = 0
+        for i in range(2, n):
+            if primes[i]:
+                result += 1
+                for j in range(2, n):
+                    if i * j >= n:
+                        break
+                    primes[i * j] = 0
+
+        return result
+
+        # i = 2
+        # while i < n:
+        #     temp = i
+        #     if primes[i]:
+        #         temp += i
+        #         while temp < n:
+        #             primes[temp] = 0
+        #             temp += i
+        #     i += 1
+
+        # return sum(primes)
+
+
+
+    # 1186 · Encode and Decode TinyURL
+    import random
+    class TinyURL:
+        def __init__(self):
+            self.dic = {}
+            self.dic2 = {}
+        def encode(self, longUrl):
+            # Encodes a URL to a shortened URL.
+            self.dic[longUrl] = str(random.randint(1,100))
+            self.dic2["https://tinyurl.com/" + self.dic[longUrl]] = longUrl
+            return "https://tinyurl.com/" + self.dic[longUrl]
+
+        def decode(self, shortUrl):
+            # Decodes a shortened URL to its original URL.
+            return self.dic2[shortUrl]
